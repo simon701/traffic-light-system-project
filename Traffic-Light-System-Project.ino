@@ -41,3 +41,19 @@ void setup() {
   startingTime = millis(); // Initialize the starting time with millis it basically tracks how long the system has been running
   applyState(state); // Apply the initial traffic light state
 }
+
+// This function resets all lights to LOW meaning all LEDs are off.
+void resetLights() {
+  digitalWrite(redPin1, LOW);
+  digitalWrite(yellowPin1, LOW);
+  digitalWrite(greenPin1, LOW);
+  digitalWrite(redPin2, LOW);
+  digitalWrite(yellowPin2, LOW);
+  digitalWrite(greenPin2, LOW);
+  digitalWrite(redPin3, LOW);
+  digitalWrite(yellowPin3, LOW);
+  digitalWrite(greenPin3, LOW);
+  digitalWrite(redPin4, LOW);
+  digitalWrite(yellowPin4, LOW);
+  digitalWrite(greenPin4, LOW);
+}
