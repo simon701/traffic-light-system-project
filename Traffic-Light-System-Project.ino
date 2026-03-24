@@ -20,10 +20,10 @@ const int redPin2 = 27, yellowPin2 = 26, greenPin2 = 25;
 const int redPin3 = 44, yellowPin3 = 43, greenPin3 = 42;
 const int redPin4 = 34, yellowPin4 = 35, greenPin4 = 36;
 // HX711 load cell pins for each lane (DOUT = data output from sensor, SCK = clock signal to read data)
-const int HX_DOUT1 = 52, HX_SCK1  = 53;
-const int HX_DOUT2 = 50, HX_SCK2  = 51;
-const int HX_DOUT3 = 48, HX_SCK3  = 49;
-const int HX_DOUT4 = 46, HX_SCK4  = 47;
+const int HX_DOUT1 = 52, HX_SCK1 = 53;
+const int HX_DOUT2 = 50, HX_SCK2 = 51;
+const int HX_DOUT3 = 48, HX_SCK3 = 49;
+const int HX_DOUT4 = 46, HX_SCK4 = 47;
 
 unsigned long startingTime;
 unsigned long elapsedTime;                   // Time elapsed since the beginning like for example it's 5:20PM and we started counting at 5PM 20min have elapsed since 5PM
@@ -32,7 +32,7 @@ const unsigned long YELLOW_TIME = 4000;      // Set the traffic light to be yell
 const unsigned long MIN_GREEN_TIME = 20000;  // Set the minimum green time to be 20 sec this will be used for sensor logic later on
 const unsigned long MAX_GREEN_TIME = 30000;  // Set the maximum green time to be 30 sec
 // HX711 objects for each load cell (1 per lane)
-HX711 scale1; 
+HX711 scale1;
 HX711 scale2;
 HX711 scale3;
 HX711 scale4;
@@ -138,7 +138,7 @@ void applyState(State s) {
   switch (s) {
     // S0: All lanes are red (safe transition state)
     case S0:
-      setAllRed(); 
+      setAllRed();
       break;
 
     // S1: Group A (lanes 1 & 3) set to green and Group B (lanes 2 & 4) set to red
@@ -149,16 +149,16 @@ void applyState(State s) {
       digitalWrite(greenPin3, HIGH);
       digitalWrite(redPin4, HIGH);
       break;
-    
+
     // S2: Group A (lanes 1 & 3) are set to yellow and Group B stays red
-    case S2: 
+    case S2:
       resetLights();
       digitalWrite(yellowPin1, HIGH);
       digitalWrite(redPin2, HIGH);
       digitalWrite(yellowPin3, HIGH);
       digitalWrite(redPin4, HIGH);
       break;
-    
+
     // S3: Group A (lanes 1 & 3) set to red and Group B (lanes 2 & 4) set to green
     case S3:
       resetLights();
@@ -167,7 +167,7 @@ void applyState(State s) {
       digitalWrite(redPin3, HIGH);
       digitalWrite(greenPin4, HIGH);
       break;
-    
+
     // S4: Group B (lanes 2 & 4) are set to yellow and Group A stays red
     case S4:
       resetLights();
@@ -179,9 +179,9 @@ void applyState(State s) {
 
     // Default: fallback safety set all to red
     default:
-      setAllRed(); 
-      break; 
-    }
+      setAllRed();
+      break;
+  }
 }
 
 // Handles state transitions based on elapsed time for each traffic phase
@@ -215,26 +215,58 @@ void handleState(State s) {
       if (elapsedTime >= MAX_GREEN_TIME) {
         next = S4;
       }
-    break;
+      break;
     // S4: Group B yellow, return to all red state
     case S4:
       if (elapsedTime >= YELLOW_TIME) {
-        next = S0; 
+        next = S0;
       }
-    break; 
+      break;
   }
 
   // If state has changed, update the current state and update the timer
   if (next != state) {
     state = next;
     startingTime = millis();
-  } 
+  }
+}
+
+// Reads and returns the weight measured on lane 1 represeting traffic density per lane. The value is also printed for debugging/monitoring.
+float weightlane1() {
+  float weight1 = scale1.get_units(1);
+  Serial.print("Weight Lane 1: ");
+  Serial.println(weight1);
+  return weight1;
+}
+
+// Reads and returns the weight measured on lane 2 represeting traffic density per lane. The value is also printed for debugging/monitoring.
+float weightlane2() {
+  float weight2 = scale2.get_units(1);
+  Serial.print("Weight Lane 2: ");
+  Serial.println(weight2);
+  return weight2;
+}
+
+// Reads and returns the weight measured on lane 3 represeting traffic density per lane. The value is also printed for debugging/monitoring.
+float weightlane3() {
+  float weight3 = scale3.get_units(1);
+  Serial.print("Weight Lane 3: ");
+  Serial.println(weight3);
+  return weight3;
+}
+
+// Reads and returns the weight measured on lane 4 represeting traffic density per lane. The value is also printed for debugging/monitoring.
+float weightlane4() {
+  float weight4 = scale4.get_units(1);
+  Serial.print("Weight Lane 4: ");
+  Serial.println(weight4);
+  return weight4;
 }
 
 // Main loop: continuously updates logic and applies corresponding outputs
 void loop() {
-  handleState(state); // Update the current state based on timing conditions
-  applyState(state); // Apply the LED outputs for the current state
+  handleState(state);  // Update the current state based on timing conditions
+  applyState(state);   // Apply the LED outputs for the current state
   // Debug: print current state to Serial Monitor
   Serial.print("State: ");
   Serial.println((int)state);
