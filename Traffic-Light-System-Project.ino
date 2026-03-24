@@ -67,3 +67,54 @@ void setAllRed() {
   digitalWrite(redPin3, HIGH);
   digitalWrite(redPin4, HIGH);
 }
+
+// Applies the given traffic light state by setting the correct LEDs for each lane
+void applyState(State s) {
+  switch (s) {
+    // S0: All lanes are red (safe transition state)
+    case S0:
+      setAllRed(); 
+      break;
+
+    // S1: Group A (lanes 1 & 3) set to green and Group B (lanes 2 & 4) set to red
+    case S1:
+      resetLights();
+      digitalWrite(greenPin1, HIGH);
+      digitalWrite(redPin2, HIGH);
+      digitalWrite(greenPin3, HIGH);
+      digitalWrite(redPin4, HIGH);
+      break;
+    
+    // S2: Group A (lanes 1 & 3) are set to yellow and Group B stays red
+    case S2: 
+      resetLights();
+      digitalWrite(yellowPin1, HIGH);
+      digitalWrite(redPin2, HIGH);
+      digitalWrite(yellowPin3, HIGH);
+      digitalWrite(redPin4, HIGH);
+      break;
+    
+    // S3: Group A (lanes 1 & 3) set to red and Group B (lanes 2 & 4) set to green
+    case S3:
+      resetLights();
+      digitalWrite(redPin1, HIGH);
+      digitalWrite(greenPin2, HIGH);
+      digitalWrite(redPin3, HIGH);
+      digitalWrite(greenPin4, HIGH);
+      break;
+    
+    // S4: Group B (lanes 2 & 4) are set to yellow and Group A stays red
+    case S4:
+      resetLights();
+      digitalWrite(redPin1, HIGH);
+      digitalWrite(yellowPin2, HIGH);
+      digitalWrite(redPin3, HIGH);
+      digitalWrite(yellowPin4, HIGH);
+      break;
+
+    // Default: fallback safety set all to red
+    default:
+      setAllRed(); 
+      break; 
+    }
+}
