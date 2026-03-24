@@ -165,3 +165,12 @@ void handleState(State s) {
     startingTime = millis();
   } 
 }
+
+// Main loop: continuously updates logic and applies corresponding outputs
+void loop() {
+  handleState(state); // Update the current state based on timing conditions
+  applyState(state); // Apply the LED outputs for the current state
+  // Debug: print current state to Serial Monitor
+  Serial.print("State: ");
+  Serial.println((int)state);
+}
