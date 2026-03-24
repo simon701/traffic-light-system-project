@@ -1,3 +1,7 @@
+#include "HX711.h"
+#include "Arduino.h"
+#include "stdio.h"
+
 int br = 9600;
 
 enum State {
@@ -15,6 +19,11 @@ const int redPin1 = 24, yellowPin1 = 23, greenPin1 = 22;
 const int redPin2 = 27, yellowPin2 = 26, greenPin2 = 25;
 const int redPin3 = 44, yellowPin3 = 43, greenPin3 = 42;
 const int redPin4 = 34, yellowPin4 = 35, greenPin4 = 36;
+// HX711 load cell pins for each lane (DOUT = data output from sensor, SCK = clock signal to read data)
+const int HX_DOUT1 = 52, HX_SCK1  = 53;
+const int HX_DOUT2 = 50, HX_SCK2  = 51;
+const int HX_DOUT3 = 48, HX_SCK3  = 49;
+const int HX_DOUT4 = 46, HX_SCK4  = 47;
 
 unsigned long startingTime;
 unsigned long elapsedTime;                   // Time elapsed since the beginning like for example it's 5:20PM and we started counting at 5PM 20min have elapsed since 5PM
@@ -22,6 +31,20 @@ const unsigned long ALL_RED_TIME = 3000;     // Set all the lights to be red for
 const unsigned long YELLOW_TIME = 4000;      // Set the traffic light to be yellow for 4 seconds
 const unsigned long MIN_GREEN_TIME = 20000;  // Set the minimum green time to be 20 sec this will be used for sensor logic later on
 const unsigned long MAX_GREEN_TIME = 30000;  // Set the maximum green time to be 30 sec
+// HX711 objects for each load cell (1 per lane)
+HX711 scale1; 
+HX711 scale2;
+HX711 scale3;
+HX711 scale4;
+/*
+Calibration factors for each load cell such that each factor was determined
+individually by calibrating the sensor with known reference weights to ensure
+accurate measurements 
+*/
+float calibration_factor = 115.36;
+float calibration_factor2 = -217;
+float calibration_factor3 = -212.5;
+float calibration_factor4 = -204.5;
 
 void setup() {
   // Runs once at startup
@@ -41,6 +64,48 @@ void setup() {
   pinMode(greenPin4, OUTPUT);
   startingTime = millis();  // Initialize the starting time with millis it basically tracks how long the system has been running
   applyState(state);        // Apply the initial traffic light state
+  // Initialize the HX711 modules for all load cells (1 per lane)
+  scale1.begin(HX_DOUT1, HX_SCK1);
+  scale2.begin(HX_DOUT2, HX_SCK2);
+  scale3.begin(HX_DOUT3, HX_SCK3);
+  scale4.begin(HX_DOUT4, HX_SCK4);
+
+  /*
+  Wait until all load cells are ready before proceeding this allows for
+  proper communication and prevents invalid readings at startup. 
+  If any of the sensors are not ready it will print a message to the Serial Monitor
+  indicating which sensor is not ready and suggesting to check the wiring.
+  The loop will continue to check every 500ms until all sensors are ready before proceeding
+  with calibration and taring.
+  */
+  while (!scale1.is_ready() || !scale2.is_ready() || !scale3.is_ready() || !scale4.is_ready()) {
+    if (!scale1.is_ready()) {
+      Serial.println("Scale 1 is not ready check wiring.");
+    }
+    if (!scale2.is_ready()) {
+      Serial.println("Scale 2 is not ready check wiring.");
+    }
+    if (!scale3.is_ready()) {
+      Serial.println("Scale 3 is not ready check wiring.");
+    }
+    if (!scale4.is_ready()) {
+      Serial.println("Scale 4 is not ready check wiring.");
+    }
+    delay(500);
+  }
+
+  /*
+  Apply calibration factors and tare each load cell
+  Tare sets the current reading to zero (baseline with no load)
+  */
+  scale1.set_scale(calibration_factor);
+  scale1.tare();
+  scale2.set_scale(calibration_factor2);
+  scale2.tare();
+  scale3.set_scale(calibration_factor3);
+  scale3.tare();
+  scale4.set_scale(calibration_factor4);
+  scale4.tare();
 }
 
 // This function resets all lights to LOW meaning all LEDs are off.
