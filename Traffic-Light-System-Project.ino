@@ -118,3 +118,50 @@ void applyState(State s) {
       break; 
     }
 }
+
+// Handles state transitions based on elapsed time for each traffic phase
+void handleState(State s) {
+  State next = s;
+
+  // Calculate how long we've been in the current state
+  elapsedTime = millis() - startingTime;
+  switch (s) {
+
+    // S0: All red, wait for safety delay before starting cycle
+    case S0:
+      if (elapsedTime >= ALL_RED_TIME) {
+        next = S1;
+      }
+      break;
+    // S1: Group A green, switch to yellow after max green time is reached which is 30s for now
+    case S1:
+      if (elapsedTime >= MAX_GREEN_TIME) {
+        next = S2;
+      }
+      break;
+    // S2: Group A yellow, start switching to Group B and set it to green
+    case S2:
+      if (elapsedTime >= YELLOW_TIME) {
+        next = S3;
+      }
+      break;
+    // S1: Group B green, switch to yellow after max green time is reached which is 30s for now
+    case S3:
+      if (elapsedTime >= MAX_GREEN_TIME) {
+        next = S4;
+      }
+    break;
+    // S4: Group B yellow, return to all red state
+    case S4:
+      if (elapsedTime >= YELLOW_TIME) {
+        next = S0; 
+      }
+    break; 
+  }
+
+  // If state has changed, update the current state and update the timer
+  if (next != state) {
+    state = next;
+    startingTime = millis();
+  } 
+}
