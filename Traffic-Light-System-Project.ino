@@ -26,15 +26,15 @@ const int HX_DOUT3 = 48, HX_SCK3 = 49;
 const int HX_DOUT4 = 46, HX_SCK4 = 47;
 
 unsigned long startingTime;
-unsigned long elapsedTime;                   // Time elapsed since the beginning like for example it's 5:20PM and we started counting at 5PM 20min have elapsed since 5PM
-const unsigned long ALL_RED_TIME = 3000;     // Set all the lights to be red for 3 seconds
-const unsigned long YELLOW_TIME = 4000;      // Set the traffic light to be yellow for 4 seconds
-const unsigned long MIN_GREEN_TIME = 20000;  // Set the minimum green time to be 20 sec this will be used for sensor logic later on
-const unsigned long MAX_GREEN_TIME = 30000;  // Set the maximum green time to be 30 sec
-const unsigned long EXTEND_GREEN = 5000; // Time extension applied when traffic is detected (in ms)
-unsigned long extended_green = MAX_GREEN_TIME; // Current dynamic green time which can be extended based on traffic conditions
-const unsigned long max_green = 90000; // Max limit for green time to prevent stravation of other lanes
-float threshold = 5; // Minimum weight threshold to consider that traffic is present
+unsigned long elapsedTime;                      // Time elapsed since the beginning like for example it's 5:20PM and we started counting at 5PM 20min have elapsed since 5PM
+const unsigned long ALL_RED_TIME = 3000;        // Set all the lights to be red for 3 seconds
+const unsigned long YELLOW_TIME = 4000;         // Set the traffic light to be yellow for 4 seconds
+const unsigned long MIN_GREEN_TIME = 20000;     // Set the minimum green time to be 20 sec this will be used for sensor logic later on
+const unsigned long MAX_GREEN_TIME = 30000;     // Set the maximum green time to be 30 sec
+const unsigned long EXTEND_GREEN = 5000;        // Time extension applied when traffic is detected (in ms)
+unsigned long extended_green = MAX_GREEN_TIME;  // Current dynamic green time which can be extended based on traffic conditions
+const unsigned long max_green = 90000;          // Max limit for green time to prevent stravation of other lanes
+float threshold = 5;                            // Minimum weight threshold to consider that traffic is present
 // HX711 objects for each load cell (1 per lane)
 HX711 scale1;
 HX711 scale2;
@@ -51,10 +51,10 @@ float calibration_factor3 = -212.5;
 float calibration_factor4 = -204.5;
 
 // Function forward declarations
-void applyState(State s); // Applies LED outputs based on the current traffic light state
-void handleState(State s); // Handles state transitions such as timing and sensor logic
-float weightGroupA(); // Returns total traffic weight for Group A (lanes 1 & 3)
-float weightGroupB(); // Returns total traffic weight for Group B (lanes 2 & 4)
+void applyState(State s);   // Applies LED outputs based on the current traffic light state
+void handleState(State s);  // Handles state transitions such as timing and sensor logic
+float weightGroupA();       // Returns total traffic weight for Group A (lanes 1 & 3)
+float weightGroupB();       // Returns total traffic weight for Group B (lanes 2 & 4)
 
 void setup() {
   // Runs once at startup
@@ -201,69 +201,69 @@ void handleState(State s) {
   // Calculate how long we've been in the current state
   elapsedTime = millis() - startingTime;
   switch (s) {
-    
-    // S0: All red: decide which group gets priority based on current traffic conditions
-    case S0: {
-      float groupA = weightGroupA();
-      float groupB = weightGroupB();
-      // No traffic detected stay in All red state
-      if (groupA <= threshold && groupB <= threshold) {
-        next = S0;
-      }
-      // If Group A has more traffic give the green light to Group A
-      else if (groupA > groupB + threshold || (groupB <= threshold && groupA > threshold)) {
-        extended_green = MAX_GREEN_TIME;
-        next = S1;
-      }
-      // Otherwise give the green light to Group B
-      else {
-        extended_green = MAX_GREEN_TIME;
-        next = S3;
-      }
-      break;
-    }
 
-    // S1: Group A is in green state with extension allowed based on traffic
-    case S1: {
-      float groupA = weightGroupA();
-      float groupB = weightGroupB();
-      // Debug: monitor weights and timing
-      Serial.print("S1 | A: ");
-      Serial.print(groupA);
-      Serial.print(" B: ");
-      Serial.print(groupB);
-      Serial.print(" elapsed: ");
-      Serial.println(elapsedTime);
-      // Enforce minimum green time
-      if (elapsedTime < MIN_GREEN_TIME) {
-        next = S1;
-      }
-      else {
-        // If traffic appears in Group B make sure to prepare to switch
-        if (groupB > threshold) {
-          next = S2;
+    // S0: All red: decide which group gets priority based on current traffic conditions
+    case S0:
+      {
+        float groupA = weightGroupA();
+        float groupB = weightGroupB();
+        // No traffic detected stay in All red state
+        if (groupA <= threshold && groupB <= threshold) {
+          next = S0;
         }
-        // If Group A becomes empty: switch to Group B
-        else if (groupA <= threshold) {
-          next = S2;
-        }
-        // Extend green if we still have traffic in Group A and is within max limit this is allowed if and only if B is empty
-        else if (elapsedTime >= extended_green) {
-          if (extended_green + EXTEND_GREEN <= max_green) {
-            extended_green += EXTEND_GREEN;
-            next = S1;
-          }
-          else {
-            next = S2;
-          }
-        }
-        // Otherwise keep green
-        else {
+        // If Group A has more traffic give the green light to Group A
+        else if (groupA > groupB + threshold || (groupB <= threshold && groupA > threshold)) {
+          extended_green = MAX_GREEN_TIME;
           next = S1;
         }
+        // Otherwise give the green light to Group B
+        else {
+          extended_green = MAX_GREEN_TIME;
+          next = S3;
+        }
+        break;
       }
-      break;
-    }
+
+    // S1: Group A is in green state with extension allowed based on traffic
+    case S1:
+      {
+        float groupA = weightGroupA();
+        float groupB = weightGroupB();
+        // Debug: monitor weights and timing
+        Serial.print("S1 | A: ");
+        Serial.print(groupA);
+        Serial.print(" B: ");
+        Serial.print(groupB);
+        Serial.print(" elapsed: ");
+        Serial.println(elapsedTime);
+        // Enforce minimum green time
+        if (elapsedTime < MIN_GREEN_TIME) {
+          next = S1;
+        } else {
+          // If traffic appears in Group B make sure to prepare to switch
+          if (groupB > threshold) {
+            next = S2;
+          }
+          // If Group A becomes empty: switch to Group B
+          else if (groupA <= threshold) {
+            next = S2;
+          }
+          // Extend green if we still have traffic in Group A and is within max limit this is allowed if and only if B is empty
+          else if (elapsedTime >= extended_green) {
+            if (extended_green + EXTEND_GREEN <= max_green) {
+              extended_green += EXTEND_GREEN;
+              next = S1;
+            } else {
+              next = S2;
+            }
+          }
+          // Otherwise keep green
+          else {
+            next = S1;
+          }
+        }
+        break;
+      }
     // S2: Group A is in yellow state: transition to Group B
     case S2:
       if (elapsedTime >= YELLOW_TIME) {
@@ -271,55 +271,55 @@ void handleState(State s) {
       }
       break;
     // S3: Group A is in green state with extension allowed based on traffic
-    case S3: {
-      float groupA = weightGroupA();
-      float groupB = weightGroupB();
-      // Debug: monitor weights and timing
-      Serial.print("S3 | A: ");
-      Serial.print(groupA);
-      Serial.print(" B: ");
-      Serial.print(groupB);
-      Serial.print(" elapsed: ");
-      Serial.print(elapsedTime);
-      Serial.print(" ext: ");
-      Serial.println(extended_green);
-      // Enforce minimum green time
-      if (elapsedTime < MIN_GREEN_TIME) {
-        next = S3;
-      }
-      else {
-        // If traffic appears in Group A make sure to prepare to switch
-        if (groupA > threshold) {
-          next = S4;
-        }
-        // If Group B becomes empty: switch to Group A
-        else if (groupB <= threshold) {
-          next = S4;
-        }
-        // Extend green if we still have traffic in Group B and is within max limit this is allowed if and only if A is empty
-        else if (elapsedTime >= extended_green) {
-          if (extended_green + EXTEND_GREEN <= max_green) {
-            extended_green += EXTEND_GREEN;
-            next = S3;
-          }
-          else {
+    case S3:
+      {
+        float groupA = weightGroupA();
+        float groupB = weightGroupB();
+        // Debug: monitor weights and timing
+        Serial.print("S3 | A: ");
+        Serial.print(groupA);
+        Serial.print(" B: ");
+        Serial.print(groupB);
+        Serial.print(" elapsed: ");
+        Serial.print(elapsedTime);
+        Serial.print(" ext: ");
+        Serial.println(extended_green);
+        // Enforce minimum green time
+        if (elapsedTime < MIN_GREEN_TIME) {
+          next = S3;
+        } else {
+          // If traffic appears in Group A make sure to prepare to switch
+          if (groupA > threshold) {
             next = S4;
           }
+          // If Group B becomes empty: switch to Group A
+          else if (groupB <= threshold) {
+            next = S4;
+          }
+          // Extend green if we still have traffic in Group B and is within max limit this is allowed if and only if A is empty
+          else if (elapsedTime >= extended_green) {
+            if (extended_green + EXTEND_GREEN <= max_green) {
+              extended_green += EXTEND_GREEN;
+              next = S3;
+            } else {
+              next = S4;
+            }
+          }
+          // Otherwise keep green
+          else {
+            next = S3;
+          }
         }
-        // Otherwise keep green
-        else {
-          next = S3;
-        }
+        break;
       }
-      break;
-    }
     // S2: Group B is in yellow state: transition to all red
-    case S4: {
-      if (elapsedTime >= YELLOW_TIME) {
-        next = S0;
+    case S4:
+      {
+        if (elapsedTime >= YELLOW_TIME) {
+          next = S0;
+        }
+        break;
       }
-      break;
-    }
   }
   // If state has changed, update the current state and update the timer
   if (next != state) {
@@ -328,7 +328,7 @@ void handleState(State s) {
     // Reset extended green when entering a green phase
     if (next == S1 || next == S3) {
       extended_green = MAX_GREEN_TIME;
-    } 
+    }
   }
 }
 
