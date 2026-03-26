@@ -1,35 +1,34 @@
-# Smart Traffic Light Controller (FSM-Based)
+# Smart Traffic Light Controller (Adaptive FSM-Based System)
 
-A smart 4-way traffic light system built using Arduino and a Finite State Machine (FSM) architecture. This project is designed to simulate and later control a real-world intersection using clean timing logic, modular code structure, and future sensor/IoT extensions.
-
----
-
-## Project Overview
-
-This system controls a four-lane intersection:
-
-- Lanes **1 & 3** -> Group A
-- Lanes **2 & 4** -> Group B
-
-Only one group is allowed to be green at a time, with yellow and all-red safety phases between transitions.
-
-The controller is implemented using:
-- A Finite State Machine (FSM)
-- Non-blocking timing using `millis()`
-- Modular function design
-- Safety handling for unconnected hardware
+A real-time adaptive 4-way traffic control system built using Arduino.  
+This project evolves from a basic finite state machine into a **sensor-driven, IoT-connected, and AI-enhanced intersection controller**.
 
 ---
 
-## Current Features
+## Project Vision
 
-- FSM-based traffic control logic
-- Configurable timing constants
-- All-red safety state
-- Yellow transition states
-- Separation between logic and hardware output
-- Safe GPIO handling for placeholder pins
-- Serial debugging support (optional)
+This project is designed as a foundation for real-world smart infrastructure, with applications in:
+
+- Traffic optimization  
+- Emergency response systems  
+- Smart city integration  
+- Data-driven urban planning  
+
+---
+
+## Phase 1 — Embedded Traffic Control System (Complete)
+
+### Features
+
+- 4-way intersection using a **Finite State Machine (FSM)**
+- States: `S0 → S1 → S2 → S3 → S4`
+- **HX711 load cell sensors per lane** detect vehicle presence
+- **Adaptive green time** based on real traffic conditions
+- Minimum and maximum green time constraints
+- **All-red safety state** between transitions
+- Serial debugging for real-time monitoring
+
+**Deliverable:** Working physical intersection model
 
 ---
 
@@ -41,72 +40,166 @@ The controller is implemented using:
 |------:|-------------|
 | S0 | All lights **RED** (safety phase) |
 | S1 | Group A **GREEN** (L1 + L3) |
-| S2 | Group A **YELLOW** (L1 + L3) |
+| S2 | Group A **YELLOW** |
 | S3 | Group B **GREEN** (L2 + L4) |
-| S4 | Group B **YELLOW** (L2 + L4) |
+| S4 | Group B **YELLOW** |
 
-### State Flow
+### Traffic Groups
 
-S0 (ALL_RED) -> S1 (A_GREEN) -> S2 (A_YELLOW) -> S3 (B_GREEN) -> S4 (B_YELLOW) -> S0
+- **Group A:** Lanes 1 & 3  
+- **Group B:** Lanes 2 & 4  
 
+Only one group is green at a time.
+
+---
+
+## Adaptive Traffic Logic
+
+Unlike traditional systems, this controller:
+
+- Reads **real-time lane weight data**
+- Dynamically adjusts green time:
+  - Extends green if traffic is present
+  - Switches early if a lane is empty
+- Prevents starvation using:
+  - `MIN_GREEN_TIME`
+  - `MAX_GREEN_TIME`
+
+This transforms the system from:
+
+> Fixed timing → Adaptive, traffic-aware control
 
 ---
 
 ## Timing Configuration
 
-All timing values are configurable.
-
 | Constant | Description | Default |
 |---------|-------------|---------|
-| `ALL_RED_TIME` | All lights red duration | 30s |
-| `YELLOW_TIME` | Yellow phase duration | 4s |
-| `MIN_GREEN_TIME` | Minimum green time (for sensor logic later) | 20s |
-| `MAX_GREEN_TIME` | Maximum green time | 30s |
+| `ALL_RED_TIME` | Safety delay | 3s |
+| `YELLOW_TIME` | Yellow phase | 4s |
+| `MIN_GREEN_TIME` | Minimum green | 20s |
+| `MAX_GREEN_TIME` | Base green | 30s |
+| `EXTEND_GREEN` | Extension step | +5s |
+| `max_green` | Hard cap | 90s |
 
-**Note:** Timing values in code are stored in milliseconds.
-
----
-
-## Hardware Plan (Coming Soon)
-
-Planned hardware components:
-- 12 LEDs (4 lanes x {red, yellow, green})
-- Resistors for each LED
-- Breadboard + jumper wires
-- (Later) sensors per lane (ex: ultrasonic / IR / weight sensors)
-- (Later) ESP32 / Wi-Fi integration for a web dashboard
-
-**Pins are currently set to -1 as placeholders** until the hardware wiring is finalized.
+> All values are stored in milliseconds in code.
 
 ---
 
-## How It Works
+## Hardware (Phase 1)
 
-- `setup()` initializes Serial, configures LED pins as outputs, and applies the initial state.
-- `handleState()` uses `millis()` to measure elapsed time in the current state and decides when to transition.
-- `applyState()` updates the traffic lights based on the current FSM state.
-- `loop()` runs continuously and triggers state transitions without blocking delays.
-
----
-
-## Roadmap / Next Steps
-
-- [ ] Wire LEDs and assign real pin numbers
-- [ ] Validate timing + transitions on real hardware
-- [ ] Add lane sensors (start with one sensor, then scale)
-- [ ] Implement sensor-based green time adjustments using `MIN_GREEN_TIME`
-- [ ] Add LCD countdown display
-- [ ] Add ESP32/web dashboard to display active state + countdown
-- [ ] Add VIP/emergency override logic (future feature)
+- Arduino (controller)
+- 4 × HX711 modules
+- 4 × load cells (one per lane)
+- LEDs (traffic lights)
+- Breadboard + wiring
 
 ---
 
-## Notes
+## Debugging & Validation
 
-This project is being developed incrementally with clean commits (each function / layer pushed separately) to keep the GitHub history readable and professional.
+- Serial Monitor outputs:
+  - Current state
+  - Lane weights
+  - Elapsed time
+  - Extended green duration
+- Sensor readiness checks at startup
+- Individual calibration per load cell using known weights
+
+---
+
+# Project Roadmap
+
+---
+
+## Phase 1 — Embedded Traffic Control System
+
+- FSM-based intersection control  
+- Load cell–based vehicle detection  
+- Adaptive green time logic  
+- All-red safety transitions  
+- Serial debugging  
+
+**Deliverable:** Working physical intersection model  
+
+---
+
+## Phase 2 — Live Web Dashboard
+
+- ESP32 bridges Arduino data over WiFi  
+- Node.js + Express backend  
+- Socket.io for real-time updates  
+- Dashboard displays:
+  - Current state  
+  - Lane weights  
+  - Green time remaining  
+  - Car counts per lane  
+- Basic traffic history graphs  
+
+**Deliverable:** Real-time browser dashboard  
+
+---
+
+## Phase 3 — Emergency Vehicle Preemption System
+
+- Custom ESP32 handheld device (GPS + touchscreen)  
+- Secure authentication using hardware ID  
+- Real-time distance calculation (Haversine formula)  
+- Automatic override at 1km:
+  - Forces correct lane green  
+  - Sets others to red  
+- Logging system:
+  - Timestamp  
+  - Device ID  
+  - GPS coordinates  
+
+**Deliverable:** Authenticated emergency override system  
+
+---
+
+## Phase 4 — Computer Vision Traffic Analytics
+
+- Raspberry Pi + dual camera setup  
+- YOLOv8 vehicle detection  
+- Lane-based vehicle counting using ROI zones  
+- Replace load cells with vision-based detection  
+- PostgreSQL database for historical data  
+- Dashboard analytics:
+  - Traffic patterns  
+  - Peak hour detection  
+  - Congestion prediction  
+
+**Deliverable:** AI-powered smart intersection  
+
+---
+
+## System Evolution
+
+Phase 1: Arduino + Sensors
+          ↓
+Phase 2: + ESP32 + Web Dashboard
+          ↓
+Phase 3: + GPS + Emergency System
+          ↓
+Phase 4: + Computer Vision + AI + Database
+
+
+---
+
+## What This Project Demonstrates
+
+- Embedded systems (Arduino, sensors)
+- Real-time systems and FSM design  
+- Hardware/software integration  
+- Networking (ESP32, backend, sockets)  
+- Distributed system design  
+- Computer vision + AI integration  
 
 ---
 
 ## Author
 
-**Simon Maarawi**
+**Simon Maarawi**  
+Computer Engineering @ Penn State  
+
+---
