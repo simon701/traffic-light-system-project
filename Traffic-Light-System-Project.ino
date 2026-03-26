@@ -31,6 +31,10 @@ const unsigned long ALL_RED_TIME = 3000;     // Set all the lights to be red for
 const unsigned long YELLOW_TIME = 4000;      // Set the traffic light to be yellow for 4 seconds
 const unsigned long MIN_GREEN_TIME = 20000;  // Set the minimum green time to be 20 sec this will be used for sensor logic later on
 const unsigned long MAX_GREEN_TIME = 30000;  // Set the maximum green time to be 30 sec
+const unsigned long EXTEND_GREEN = 5000; // Time extension applied when traffic is detected (in ms)
+unsigned long extended_green = MAX_GREEN_TIME; // Current dynamic green time which can be extended based on traffic conditions
+const unsigned long max_green = 90000; // Max limit for green time to prevent stravation of other lanes
+float threshold = 5; // Minimum weight threshold to consider that traffic is present
 // HX711 objects for each load cell (1 per lane)
 HX711 scale1;
 HX711 scale2;
@@ -45,6 +49,12 @@ float calibration_factor = 115.36;
 float calibration_factor2 = -217;
 float calibration_factor3 = -212.5;
 float calibration_factor4 = -204.5;
+
+// Function forward declarations
+void applyState(State s); // Applies LED outputs based on the current traffic light state
+void handleState(State s); // Handles state transitions such as timing and sensor logic
+float weightGroupA(); // Returns total traffic weight for Group A (lanes 1 & 3)
+float weightGroupB(); // Returns total traffic weight for Group B (lanes 2 & 4)
 
 void setup() {
   // Runs once at startup
@@ -263,11 +273,31 @@ float weightlane4() {
   return weight4;
 }
 
+/*
+Computes total weight for Group A (lanes 1 & 3). This will be the total combined traffic
+load for this direction
+*/
+float weightGroupA() {
+  return weightlane1() + weightlane3();
+}
+
+/*
+Computes total weight for Group B (lanes 2 & 4). This will be the total combined traffic
+load for this direction
+*/
+float weightGroupB() {
+  return weightlane2() + weightlane4();
+}
+
+
 // Main loop: continuously updates logic and applies corresponding outputs
 void loop() {
   handleState(state);  // Update the current state based on timing conditions
   applyState(state);   // Apply the LED outputs for the current state
-  // Debug: print current state to Serial Monitor
+  // Debug: print current state, elapsed time in seconds since system start to Serial Monitor
   Serial.print("State: ");
   Serial.println((int)state);
+  Serial.print("Time: ");
+  Serial.println(millis() / 1000);
+  delay(800);
 }
