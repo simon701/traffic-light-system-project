@@ -176,11 +176,17 @@ This transforms the system from:
 ## System Evolution
 
 Phase 1: Arduino + Sensors
+
           ↓
+
 Phase 2: + ESP32 + Web Dashboard
+
           ↓
+
 Phase 3: + GPS + Emergency System
+
           ↓
+
 Phase 4: + Computer Vision + AI + Database
 
 
